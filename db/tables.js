@@ -50,6 +50,22 @@ export const createTables = async () => {
                   ON DELETE CASCADE
                   ON UPDATE CASCADE
             )`,
+            `INSERT INTO columns (title) VALUES
+                ('Project A'),
+                ('Project B'),
+                ('Project C'),
+                ('Project D'),
+                ('Project D'),
+                ('Project D'),
+                ('Project D'),
+                ('Project D'),
+                ('Project D'),
+                ('Project D'),
+                ('Project D'),
+                ('Project D'),
+                ('Project D'),
+                ('Project D'),
+                ('Project E');`,
         ];
 
         for (let table of tables) {

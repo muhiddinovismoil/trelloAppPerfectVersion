@@ -1,13 +1,20 @@
-import pool from "../db/db.js";
+import {
+    createTasksData,
+    deleteTasksDataById,
+    getTasksData,
+    getTasksDataById,
+    updateTasksDataById,
+} from "../services/index.js";
 export async function getAllTasks(req, res, next) {
     try {
-        const idBoard = req.params.boardId;
-        const data = await pool.query(`SELECT * FROM tasks WHERE boardId=$1`, [
-            idBoard,
-        ]);
-        res.send({
+        const id = req.params.boardId;
+        const data = await getTasksData(id);
+        if (!data) {
+            return res.status(404).send(`Tasks not found`);
+        }
+        res.status(200).send({
             status: "Success",
-            data: data.rows,
+            data: data,
         });
     } catch (error) {
         next(error);
@@ -17,13 +24,13 @@ export async function getTasksById(req, res, next) {
     try {
         const idBoard = req.params.boardId;
         const id = req.params.taskId;
-        const dataById = await pool.query(
-            `SELECT * FROM tasks WHERE id=$1 AND boardId=$2`,
-            [id, idBoard]
-        );
-        res.send({
+        const dataById = await getTasksDataById(id, idBoard);
+        if (!dataById) {
+            return res.status(404).send(`Tasks not found`);
+        }
+        res.status(200).send({
             status: "success",
-            data: dataById.rows,
+            data: dataById,
         });
     } catch (error) {
         next(error);
@@ -33,13 +40,18 @@ export async function createTasks(req, res, next) {
     try {
         let boardId = req.params.boardId;
         let { title, orders, description, userId, columnId } = req.body;
-        await pool.query(
-            `INSERT INTO
-            tasks(title,orders,description,userId,boardId,columnId)
-            VALUES($1,$2,$3,$4,$5,$6)`,
-            [title, orders, description, userId, boardId, columnId]
+        const addTask = await createTasksData(
+            boardId,
+            title,
+            orders,
+            description,
+            userId,
+            columnId
         );
-        res.send("success");
+        res.status(200).send({
+            status: "Successfully created",
+            data: addTask,
+        });
     } catch (error) {
         next(error);
     }
@@ -49,22 +61,17 @@ export async function updateTasksById(req, res, next) {
         const id = req.params.taskId;
         const IDboard = req.params.boardId;
         const { title, orders, description } = req.body;
-        const data = await pool.query(`SELECT * FROM tasks WHERE id=$1`, [id]);
-        const oldTitle = data.rows[0].title;
-        const oldDescription = data.rows[0].description;
-        const oldOrder = data.rows[0].orders;
-        await pool.query(
-            `UPDATE tasks SET title=$1,orders=$2,description=$3 WHERE id=$4 AND boardId=$5
-            `,
-            [
-                title || oldTitle,
-                orders || oldOrder,
-                description || oldDescription,
-                id,
-                IDboard,
-            ]
+        const updatedTasks = await updateTasksDataById(
+            id,
+            IDboard,
+            title,
+            orders,
+            description
         );
-        res.send("successfully updated");
+        res.status(200).send({
+            status: "successfully updated",
+            data: updatedTasks,
+        });
     } catch (error) {
         next(error);
     }
@@ -73,13 +80,11 @@ export async function deleteTasksById(req, res, next) {
     try {
         const IDboard = req.params.boardId;
         const IDtask = req.params.taskId;
-        await pool.query(
-            `
-            DELETE FROM tasks WHERE id=$1 AND boardId=$2
-        `,
-            [IDtask, IDboard]
-        );
-        res.send("successfully deleted");
+        const data = await deleteTasksDataById(IDtask, IDboard);
+        res.status(200).send({
+            status: "Successfully deleted",
+            data: data,
+        });
     } catch (error) {
         next(error);
     }

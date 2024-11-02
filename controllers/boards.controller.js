@@ -1,12 +1,18 @@
-import pool from "../db/db.js";
+import {
+    getBoardsData,
+    getBoardsByIdData,
+    updateBoardsData,
+    deleteDataById,
+} from "../services/index.js";
 export async function getAllBoards(req, res, next) {
     try {
-        const getBoards = await pool.query(`
-                SELECT * FROM boards
-            `);
-        res.send({
+        const getBoards = await getBoardsData();
+        if (!getAllBoards) {
+            return res.status(404).send(`NOTHING FOUND`);
+        }
+        res.status(200).send({
             status: "success",
-            data: getBoards.rows,
+            data: getBoards,
         });
     } catch (error) {
         next(error);
@@ -15,13 +21,14 @@ export async function getAllBoards(req, res, next) {
 export async function getBoardsById(req, res, next) {
     try {
         const id = req.params.boardId;
-        const getElementById = await pool.query(
-            `
-            SELECT * FROM boards WHERE id=$1
-            `,
-            [id]
-        );
-        res.send(getElementById.rows);
+        const dataById = await getBoardsByIdData(id);
+        if (!dataById) {
+            return res.status(404).send(`Data not found`);
+        }
+        res.status(200).send({
+            status: "success",
+            data: dataById,
+        });
     } catch (error) {
         next(error);
     }
@@ -35,7 +42,7 @@ export async function createBoards(req, res, next) {
             `,
             [title, columns]
         );
-        res.status(200).send("success");
+        res.status(200).status(200).send("success");
     } catch (error) {
         next(error);
     }
@@ -44,17 +51,14 @@ export async function updateBoardsById(req, res, next) {
     try {
         const id = req.params.boardId;
         const { title } = req.body;
-        const getBoardsById = await pool.query(
-            `
-            SELECT * FROM boards WHERE id=$1`,
-            [id]
-        );
-        const oldTitle = getBoardsById.rows[0].title;
-        await pool.query(`UPDATE boards SET title=$1 WHERE id=$2`, [
-            title || oldTitle,
-            id,
-        ]);
-        res.send("success");
+        const updateBoard = await updateBoardsData(id, title);
+        if (!updateBoard) {
+            return res.status(404).send(`Data not found and cannot be updated`);
+        }
+        res.status(200).send({
+            status: "Updated",
+            updatedBoard: updateBoard,
+        });
     } catch (error) {
         next(error);
     }
@@ -62,8 +66,14 @@ export async function updateBoardsById(req, res, next) {
 export async function deleteBoardsById(req, res, next) {
     try {
         const id = req.params.boardId;
-        await pool.query(`DELETE FROM boards WHERE id=$1`, [id]);
-        res.send("success");
+        const data = await deleteDataById(id);
+        if (!data) {
+            return res.status(404).send(`Data not found and cannot be deleted`);
+        }
+        res.status(200).send({
+            status: "Deleted",
+            deletedBoard: data,
+        });
     } catch (error) {
         next(error);
     }
