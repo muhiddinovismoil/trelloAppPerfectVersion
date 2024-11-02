@@ -15,6 +15,10 @@ app.use("/setUp", (req, res) => {
     res.status(201).send("Tables were created");
 });
 app.use("/api/v1", routes);
+app.use((err, req, res, next) => {
+    console.error(err.message);
+    res.status(500).send("Something broke!");
+});
 
 const port = process.env.PORT || 3001;
 app.listen(port, () => {
